@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The WATTS UP Act — Data Center Energy Accountability</title>
+<meta name="description" content="H.R. 4400, the WATTS UP Act: a student bill requiring large data centers to report their energy and water use, pay for their own grid upgrades, and meet clean energy standards. AP Government House of Representatives simulation.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230f2a4a'/%3E%3Cpath d='M36 10 20 36h11l-3 18 16-26H33z' fill='%239ec5f4'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);else if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
+</head>
+<body>
+<div id="progress" aria-hidden="true"></div>
+<header class="site-header">
+  <nav class="wrap nav" aria-label="Main">
+    <a class="brand" href="index.html"><span class="seal">H.R.</span><span>WATTS UP Act<small>H.R. 4400 · 119th Congress (Simulation)</small></span></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html" aria-current="page">Home</a></li>
+      <li><a href="bill.html">The Bill</a></li>
+      <li><a href="letter.html">Letter</a></li>
+      <li><a href="bibliography.html">Bibliography</a></li>
+    </ul>
+    <div style="display:flex;gap:.5rem">
+      <button class="icon-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode">☾</button>
+      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="navLinks">☰</button>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="wrap">
+      <div class="eyebrow">H.R. 4400 · Energy and Environment Committee</div>
+      <h1>AI needs power. <em>Your family</em> shouldn't be the one paying for it.</h1>
+      <p class="lede">The <strong>WATTS UP Act</strong> makes large data centers report what they use, pay for the grid upgrades they cause, and run cleaner over time — without slowing down American innovation.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="bill.html">Read the bill →</a>
+        <a class="btn btn-ghost" href="letter.html">Letter to Rep. Peters</a>
+      </div>
+      <div class="hero-meta">
+        <div><b>Sponsor</b>Rep. Nikhil Kyadiggeri</div>
+        <div><b>Committee</b>Energy and Environment</div>
+        <div><b>Introduced</b>October 29, 2026</div>
+        <div><b>Status</b>In committee</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat reveal"><div class="value"><span data-count="4.4" data-decimals="1">0</span><small>%</small></div><div class="label">of all U.S. electricity went to data centers in 2023</div><div class="src">Lawrence Berkeley National Laboratory</div></div>
+      <div class="stat reveal"><div class="value"><span data-count="12">0</span><small>%</small></div><div class="label">share they could reach by 2028 (range: 6.7% – 12%)</div><div class="src">LBNL projection</div></div>
+      <div class="stat reveal"><div class="value"><span data-count="66">0</span><small>B liters</small></div><div class="label">of water used for cooling in 2023</div><div class="src">LBNL</div></div>
+      <div class="stat reveal"><div class="value"><span data-count="417">0</span><small>–3</small></div><div class="label">House vote on the Ratepayer Protection Act, Sept. 16, 2026</div><div class="src">H.R. 9340</div></div>
+    </div>
+  </div>
+
+  <section id="problem">
+    <div class="wrap split">
+      <div class="reveal">
+        <div class="eyebrow">The problem</div>
+        <h2>The electricity bill for the AI boom is being split with people who never asked for it.</h2>
+        <p>Data centers — the warehouses full of computers that run AI, cloud storage, and streaming — more than doubled their power use between 2017 and 2023, and the Department of Energy expects them to double or triple again by 2028.</p>
+        <p>To serve a single large facility, a utility often has to build new power plants, substations, and transmission lines. Under most current rules, that cost gets folded into everyone's rates. Families and small businesses in San Diego end up subsidizing the power supply of some of the richest companies on Earth.</p>
+        <p>In September 2026 the House passed the Ratepayer Protection Act 417–3, but it only <em>asks</em> states to consider making data centers pay their fair share. This bill makes it a requirement — and adds transparency and clean-energy standards on top.</p>
+      </div>
+      <div class="card reveal">
+        <div class="chart-head"><h3>U.S. data center electricity use</h3><span class="sub">Terawatt-hours per year, 2014–2028</span></div>
+        <div class="chart-wrap" id="energyChart"></div>
+        <div class="chart-foot">
+          <div class="legend"><span><i></i>Measured</span><span><i class="dash"></i>Projected midpoint</span><span><i class="band"></i>Projection range</span></div>
+          <button class="table-toggle" id="tableToggle">View as table</button>
+        </div>
+        <table class="data" id="chartTable" hidden>
+          <thead><tr><th>Year</th><th class="num">TWh</th><th class="num">Share of U.S. electricity</th></tr></thead>
+          <tbody>
+            <tr><td>2014</td><td class="num">58</td><td class="num">1.5%</td></tr>
+            <tr><td>2018</td><td class="num">76</td><td class="num">1.9%</td></tr>
+            <tr><td>2023</td><td class="num">176</td><td class="num">4.4%</td></tr>
+            <tr><td>2028 (projected)</td><td class="num">325 – 580</td><td class="num">6.7% – 12%</td></tr>
+          </tbody>
+        </table>
+        <p class="muted" style="font-size:.78rem;margin:.75rem 0 0">Source: Shehabi et al., <em>2024 United States Data Center Energy Usage Report</em>, Lawrence Berkeley National Laboratory, Dec. 2024.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="pillars" style="background:var(--surface-2)">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <div class="eyebrow">What the bill does</div>
+        <h2>Three rules for every data center over 50 megawatts.</h2>
+        <p class="lede">Fifty megawatts is roughly the power of 40,000 homes. The bill only touches the giants — not small businesses or school server rooms.</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar reveal"><div class="num">1</div><h3>Show your numbers</h3><p>Every large data center reports its electricity, peak demand, cooling water, efficiency (PUE), and clean-energy share to the Department of Energy each year — published in a free, searchable public database.</p><a href="bill.html#sec2">Section 2 →</a></div>
+        <div class="pillar reveal"><div class="num">2</div><h3>Pay your own way</h3><p>Data centers cover the full cost of the power plants, substations, and lines built to serve them, sign 12-year contracts with exit fees, and utilities can't raise household rates to cover them.</p><a href="bill.html#sec3">Section 3 →</a></div>
+        <div class="pillar reveal"><div class="num">3</div><h3>Clean up over time</h3><p>New facilities hit a PUE of 1.3; everyone reaches 50% clean energy by 2030 and 100% by 2035, half of it from <em>new</em> sources, and agrees to cut load 10% during grid emergencies.</p><a href="bill.html#sec4">Section 4 →</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="calculator">
+    <div class="wrap split">
+      <div class="reveal">
+        <div class="eyebrow">Who pays? Try it.</div>
+        <h2>The Grid Accountability Fee, in real numbers.</h2>
+        <p>Section 5 funds the whole Act with a fee of <strong>$1 per megawatt-hour</strong> on large data centers — about one-tenth of one cent per kilowatt-hour. Slide to see what a facility of a given size would pay, and what it would contribute to the public fund.</p>
+        <p>Based on the 176 million MWh data centers used in 2023, the fee raises roughly <strong>$176 million a year</strong>: $25 M runs the reporting database, $100 M goes to grid grants in host communities, and the rest rewards companies that beat the standards early.</p>
+        <div class="split-bar" aria-hidden="true"><span class="a" style="width:14.2%"></span><span class="b" style="width:56.8%"></span><span class="c" style="width:29%"></span></div>
+        <div class="split-legend" style="margin-top:.5rem"><span><i style="background:var(--accent)"></i>DOE enforcement $25 M</span><span><i style="background:#1baf7a"></i>Community grid grants $100 M</span><span><i style="background:#eda100"></i>Early-compliance rebates ≈ $51 M</span></div>
+      </div>
+      <div class="card calc reveal">
+        <label for="mwSlider">Data center peak demand <output id="mwOut">100 MW</output></label>
+        <input type="range" id="mwSlider" min="10" max="1000" step="10" value="100" aria-describedby="calcNote">
+        <div class="ticks"><span>10 MW</span><span>50 MW threshold</span><span>1,000 MW</span></div>
+        <div class="results">
+          <div class="result" id="rCoveredBox"><div class="v" id="rCovered">Yes</div><div class="k">Covered by the Act?</div></div>
+          <div class="result"><div class="v" id="rHomes">80,000</div><div class="k">homes' worth of power</div></div>
+          <div class="result"><div class="v" id="rMwh">700,800</div><div class="k">MWh used per year</div></div>
+          <div class="result"><div class="v" id="rFee">$0.7 M</div><div class="k">annual Grid Accountability Fee</div></div>
+          <div class="result"><div class="v" id="rShare">0.40%</div><div class="k">of the national fund</div></div>
+          <div class="result"><div class="v" id="rBillShare">$0</div><div class="k">added to your electric bill</div></div>
+        </div>
+        <p class="note" id="calcNote">Assumes the facility runs at 80% of peak demand year-round and 1 MW serves about 800 homes. Illustrative, not a utility rate study.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="timeline" style="background:var(--surface-2)">
+    <div class="wrap split">
+      <div class="reveal">
+        <div class="eyebrow">How it rolls out</div>
+        <h2>A realistic timeline, not an overnight mandate.</h2>
+        <p>Every deadline gives the industry years to adapt, and the Department of Energy can grant a one-time two-year extension to any facility that shows a real plan.</p>
+        <blockquote class="quote reveal">"This bill does not slow down American innovation; it makes sure that innovation does not come at the expense of the people who live next door to it."<cite>— Conclusion, WATTS UP Act</cite></blockquote>
+      </div>
+      <ol class="timeline reveal">
+        <li><b>Day 180</b><span>Act takes effect. FERC begins writing the national large-load standard.</span></li>
+        <li><b>Year 1</b><span>FERC standard finalized; states apply it to their utilities. Data centers pay full interconnection costs.</span></li>
+        <li><b>Year 2</b><span>First annual energy and water reports are due; public database goes live within 90 days.</span></li>
+        <li><b>2028</b><span>New data centers must be designed to a PUE of 1.3 or better.</span></li>
+        <li><b>2030</b><span>50% clean energy for every large data center.</span></li>
+        <li><b>2032</b><span>Existing facilities reach a PUE of 1.5 or better.</span></li>
+        <li><b>2035</b><span>100% clean energy, at least half of it from new sources built after the Act.</span></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="acronym">
+    <div class="narrow reveal" style="text-align:center">
+      <div class="eyebrow">Yes, the name is on purpose</div>
+      <h2>WATTS UP</h2>
+      <p class="lede" style="margin-inline:auto"><strong>W</strong>ater, <strong>A</strong>ccountability, <strong>T</strong>ransparency, and <strong>T</strong>racking <strong>S</strong>tandards for <strong>U</strong>tility <strong>P</strong>rotection Act.</p>
+      <p class="muted">Congress has passed the USA PATRIOT Act, the CHIPS Act, and the FAIR Act. We're just continuing the tradition.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta reveal">
+        <div><h2>Read the full text of H.R. 4400</h2><p>Five sections, a funding mechanism, and plain-English notes for the committee debate.</p></div>
+        <a class="btn btn-primary" href="bill.html">Open the bill →</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© <span id="year">2026</span> Nikhil Kyadiggeri · AP U.S. Government, Canyon Crest Academy · House of Representatives Bill Project Simulation</div>
+    <div><a href="bill.html">Bill</a> · <a href="letter.html">Letter</a> · <a href="bibliography.html">Bibliography</a></div>
+  </div>
+</footer>
+<script src="app.js"></script>
+</body>
+</html>
