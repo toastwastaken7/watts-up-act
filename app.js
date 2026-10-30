@@ -162,26 +162,34 @@
   /* ---------- Fee calculator ---------- */
   var slider = document.getElementById('mwSlider');
   if (slider) {
-    var HOURS = 8760, LOAD = 0.8, FEE = 1.0, HOMES_PER_MW = 800; // 50 MW ≈ 40,000 homes
-    function fmtMoney(n) { if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + ' B'; if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + ' M'; return '$' + Math.round(n).toLocaleString(); }
-    function fmtNum(n) { return Math.round(n).toLocaleString(); }
+    var HOURS = 8760, LOAD = 0.8, FEE = 1.0, HOMES_PER_MW = 800;
+    var NAT_MWH = 176e6;                       // 2023 U.S. data center use, MWh
+    var GAL_PER_KWH = (66e9 * 0.264172) / 176e9; // 0.375 L/kWh -> gallons per kWh (~0.099)
+    var $ = function (id) { return document.getElementById(id); };
+    var fmt = function (n, d) { return n.toLocaleString(undefined, { maximumFractionDigits: d || 0, minimumFractionDigits: d || 0 }); };
+    function compact(n, unit) { if (n >= 1e9) return fmt(n / 1e9, 2) + ' B'; if (n >= 1e6) return fmt(n / 1e6, 1) + ' M'; if (n >= 1e3) return fmt(n / 1e3, 1) + ' K'; return fmt(n); }
     function update() {
       var mw = parseInt(slider.value, 10);
       var mwh = mw * HOURS * LOAD;
       var fee = mwh * FEE;
-      document.getElementById('mwOut').textContent = mw + ' MW';
-      document.getElementById('rHomes').textContent = fmtNum(mw * HOMES_PER_MW);
-      document.getElementById('rMwh').textContent = fmtNum(mwh);
-      document.getElementById('rFee').textContent = fmtMoney(fee);
-      document.getElementById('rBillShare').textContent = '$0';
-      document.getElementById('rCovered').textContent = mw >= 50 ? 'Yes — covered' : 'No — below 50 MW';
-      var covered = document.getElementById('rCoveredBox');
-      if (covered) covered.style.outline = mw >= 50 ? '2px solid var(--accent)' : '2px solid transparent';
-      var nat = 176e6 * FEE; // national fee pool, 2023 usage
-      var pct = Math.min(fee / nat * 100, 100);
-      var share = document.getElementById('rShare'); if (share) share.textContent = pct.toFixed(2) + '%';
+      var covered = mw >= 50;
+      $('mwOut').textContent = fmt(mw) + ' MW';
+      $('rHomes').textContent = fmt(mw * HOMES_PER_MW);
+      $('rMwh').textContent = fmt(mwh);
+      $('rFee').textContent = covered ? '$' + fmt(fee) : '$0';
+      $('rWater').textContent = compact(mwh * 1000 * GAL_PER_KWH);
+      $('rShare').textContent = covered ? fmt(fee / NAT_MWH * 100, 2) + '%' : '0%';
+      $('rFine').textContent = covered ? '$50,000' : 'n/a';
+      $('rBillShare').textContent = '$0.00';
+      $('rCovered').textContent = covered ? 'Yes' : 'No';
+      $('rCoveredBox').style.outline = covered ? '2px solid var(--accent)' : '2px solid var(--amber)';
+      $('formula').innerHTML = fmt(mw) + ' MW × 8,760 h × 80% = <b>' + fmt(mwh) + ' MWh/yr</b> × $1.00 = <b>$' + fmt(fee) + '</b>' + (covered ? '' : ' <span style="color:var(--amber)">(not charged: under 50 MW)</span>');
+      document.querySelectorAll('.presets button').forEach(function (b) { b.classList.toggle('active', parseInt(b.getAttribute('data-mw'), 10) === mw); });
     }
-    slider.addEventListener('input', update); update();
+    slider.addEventListener('input', update);
+    slider.addEventListener('change', update);
+    document.querySelectorAll('.presets button').forEach(function (b) { b.addEventListener('click', function () { slider.value = b.getAttribute('data-mw'); update(); }); });
+    update();
   }
 
   /* ---------- Bill page: collapsible sections, TOC highlight, tools ---------- */
@@ -411,4 +419,169 @@
     }
     tick(); setInterval(tick, 100);
   }
+})();
+
+/* ===== Flood mode: rising water, bubbles, fish, ripple distortion, live gauge ===== */
+(function () {
+  'use strict';
+  var btn = document.getElementById('floodBtn'), btn2 = document.getElementById('floodBtn2'), canvas = document.getElementById('floodCanvas'), gauge = document.getElementById('floodGauge');
+  if (!btn || !canvas) return;
+  var ctx = canvas.getContext('2d'), W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  var on = false, level = 0, target = 0, raf = null, t = 0, bubbles = [], fish = [], splashes = [], drops = [], pour = 0, src = { x: 0, y: 0 };
+  var dispMap = document.querySelector('#waterRipple feDisplacementMap'), noise = document.getElementById('rippleNoise');
+  var LITERS_YEAR = 66e9, GAL_PER_L = 0.264172, SEC_YEAR = 365.25 * 86400, PARK_M2 = 3.41e6; // Central Park: 843 acres
+  var fmt = function (n, d) { return n.toLocaleString(undefined, { maximumFractionDigits: d || 0, minimumFractionDigits: d || 0 }); };
+
+  function size() { W = window.innerWidth; H = window.innerHeight; canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); var r = btn.getBoundingClientRect(); src = { x: r.left + r.width / 2, y: r.bottom }; }
+  function yearFrac() { var now = new Date(), jan = new Date(now.getFullYear(), 0, 1); return Math.min((now - jan) / (SEC_YEAR * 1000), 1); }
+  function surfaceY(x) { var d = (x - src.x) / 70; return H * (1 - level) + Math.sin(x * 0.012 + t * 1.6) * 7 + Math.sin(x * 0.027 - t * 2.3) * 4 + pour * 10 * Math.exp(-d * d); }
+
+  function makeFish(i) {
+    var hues = [['#ff9f43', '#e67e22'], ['#74b9ff', '#0984e3'], ['#ffd166', '#f4a261'], ['#a29bfe', '#6c5ce7'], ['#ff7675', '#d63031'], ['#55efc4', '#00b894']];
+    var c = hues[i % hues.length], s = 14 + Math.random() * 18;
+    return { x: Math.random() * W, y: H - Math.random() * H * 0.4, vx: (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 1.2), vy: 0, size: s, body: c[0], fin: c[1], phase: Math.random() * 6.28, turnAt: 0, speed: 0.6 + Math.random() * 1.2 };
+  }
+  function reset() { bubbles = []; splashes = []; fish = []; for (var i = 0; i < (W < 700 ? 4 : 6); i++) fish.push(makeFish(i)); }
+
+  function drawFish(f) {
+    var dir = f.vx < 0 ? -1 : 1, ang = Math.atan2(f.vy, Math.abs(f.vx) + 0.001) * dir * 0.6;
+    ctx.save(); ctx.translate(f.x, f.y); ctx.scale(dir, 1); ctx.rotate(ang);
+    var s = f.size, wag = Math.sin(t * 9 + f.phase) * 0.35;
+    // tail
+    ctx.fillStyle = f.fin; ctx.beginPath(); ctx.moveTo(-s * 0.7, 0); ctx.lineTo(-s * 1.25, -s * 0.5 + wag * s * 0.6); ctx.lineTo(-s * 1.25, s * 0.5 + wag * s * 0.6); ctx.closePath(); ctx.fill();
+    // body
+    ctx.fillStyle = f.body; ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    // dorsal fin + belly shade
+    ctx.fillStyle = f.fin; ctx.beginPath(); ctx.moveTo(-s * 0.3, -s * 0.45); ctx.quadraticCurveTo(0, -s * 0.95, s * 0.35, -s * 0.4); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.beginPath(); ctx.ellipse(s * 0.05, s * 0.15, s * 0.7, s * 0.25, 0, 0, Math.PI * 2); ctx.fill();
+    // eye
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(s * 0.55, -s * 0.12, s * 0.13, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(s * 0.59, -s * 0.12, s * 0.07, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+  }
+
+  function stepFish(f, dt) {
+    var sy = surfaceY(f.x), underwater = f.y > sy + f.size * 0.4;
+    if (underwater) {
+      // buoyant, slightly viscous world
+      f.vy += (Math.sin(t * 1.3 + f.phase) * 0.02);            // gentle vertical wander
+      f.vy *= 0.96; f.vx *= 0.995;
+      // keep comfortable depth: avoid surface and floor
+      if (f.y < sy + 40) f.vy += 0.06; if (f.y > H - 30) f.vy -= 0.08;
+      // cruise toward preferred speed, occasionally turn around
+      var want = f.speed * (f.vx < 0 ? -1 : 1); f.vx += (want - f.vx) * 0.02;
+      if (t > f.turnAt) { f.turnAt = t + 3 + Math.random() * 6; if (Math.random() < 0.35) f.vx = -f.vx; }
+      // rare jump when near the surface
+      if (f.y < sy + 90 && Math.random() < 0.0015) { f.vy = -7.5; f.vx *= 1.6; }
+      if (Math.random() < 0.02) bubbles.push({ x: f.x - f.size * (f.vx < 0 ? -1 : 1) * 0.9, y: f.y, r: 1.5 + Math.random() * 2, vy: -1.2 - Math.random(), wob: Math.random() * 6.28 });
+    } else {
+      f.vy += 0.42 * dt;  // gravity above the surface
+      if (f.y + f.vy * dt > sy + f.size * 0.4 && f.vy > 2) { for (var i = 0; i < 8; i++) bubbles.push({ x: f.x + (Math.random() - 0.5) * 30, y: sy, r: 2 + Math.random() * 3, vy: -2 - Math.random() * 2, wob: Math.random() * 6.28 }); splashes.push({ x: f.x, y: sy, born: t }); }
+    }
+    f.x += f.vx * dt; f.y += f.vy * dt;
+    if (f.x < -40) { f.x = -40; f.vx = Math.abs(f.vx); } if (f.x > W + 40) { f.x = W + 40; f.vx = -Math.abs(f.vx); }
+    if (f.y > H - 10) { f.y = H - 10; f.vy = -Math.abs(f.vy) * 0.3; }
+  }
+
+  var lastNow = 0;
+  function frame(now) {
+    t = now / 1000;
+    var dtSec = lastNow ? Math.min((now - lastNow) / 1000, 0.1) : 0.016; lastNow = now;
+    var dt = dtSec * 60; // motion in 60fps frame units, so speed is the same at any frame rate
+    // animate level (time-based easing: ~2.5 s to fill, ~1.2 s to drain)
+    level += (target - level) * (1 - Math.exp(-(target > level ? 1.7 : 3.8) * dtSec));
+    if (!on && level < 0.004 && pour < 0.03) { level = 0; drops = []; lastNow = 0; ctx.clearRect(0, 0, W, H); canvas.style.display = ''; document.body.classList.remove('flooded'); if (dispMap) dispMap.setAttribute('scale', '0'); raf = null; return; }
+    ctx.clearRect(0, 0, W, H);
+    // water body
+    var top = H * (1 - level) - 12;
+    var grad = ctx.createLinearGradient(0, top, 0, H); grad.addColorStop(0, 'rgba(30,110,200,0.28)'); grad.addColorStop(0.5, 'rgba(14,70,150,0.42)'); grad.addColorStop(1, 'rgba(4,30,80,0.62)');
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.moveTo(0, H);
+    for (var x = 0; x <= W; x += 8) ctx.lineTo(x, surfaceY(x));
+    ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+    // caustic light bands under the surface
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (var k = 0; k < 4; k++) { var cxp = ((t * (30 + k * 12) + k * 300) % (W + 400)) - 200, cy = H * (1 - level) + 60 + k * 70; var g2 = ctx.createRadialGradient(cxp, cy, 0, cxp, cy, 160); g2.addColorStop(0, 'rgba(158,197,244,0.10)'); g2.addColorStop(1, 'rgba(158,197,244,0)'); ctx.fillStyle = g2; ctx.fillRect(cxp - 160, cy - 160, 320, 320); }
+    ctx.restore();
+    // surface line
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 2; ctx.beginPath(); for (var x2 = 0; x2 <= W; x2 += 8) { var yy = surfaceY(x2); if (x2) ctx.lineTo(x2, yy); else ctx.moveTo(x2, yy); } ctx.stroke();
+    // pouring stream from the top (the Flood button) into the pool
+    var wantPour = on ? (level < target - 0.01 ? 1 : 0.22) : 0;
+    pour += (wantPour - pour) * (1 - Math.exp(-3 * dtSec));
+    if (pour > 0.02) {
+      var sx = src.x, sy0 = src.y, syw = surfaceY(sx), sw = 6 + 22 * pour;
+      if (syw > sy0 + 4) {
+        ctx.save();
+        var sg = ctx.createLinearGradient(sx - sw, 0, sx + sw, 0); sg.addColorStop(0, 'rgba(158,197,244,0)'); sg.addColorStop(0.3, 'rgba(120,180,240,0.55)'); sg.addColorStop(0.5, 'rgba(235,245,255,0.85)'); sg.addColorStop(0.7, 'rgba(120,180,240,0.55)'); sg.addColorStop(1, 'rgba(158,197,244,0)');
+        ctx.fillStyle = sg; ctx.beginPath();
+        for (var yy2 = sy0; yy2 <= syw; yy2 += 6) { var e = Math.sin(yy2 * 0.06 - t * 14) * 2.5 * pour + Math.sin(yy2 * 0.02 + t * 5) * 1.5; var ww = sw * (0.75 + 0.35 * Math.min((yy2 - sy0) / 120, 1)); ctx.lineTo(sx - ww / 2 + e, yy2); }
+        for (var yy3 = syw; yy3 >= sy0; yy3 -= 6) { var e2 = Math.sin(yy3 * 0.06 - t * 14 + 1.5) * 2.5 * pour + Math.sin(yy3 * 0.02 + t * 5) * 1.5; var ww2 = sw * (0.75 + 0.35 * Math.min((yy3 - sy0) / 120, 1)); ctx.lineTo(sx + ww2 / 2 + e2, yy3); }
+        ctx.closePath(); ctx.fill();
+        // impact foam
+        var fr = 14 + 26 * pour + Math.sin(t * 20) * 3;
+        var fg2 = ctx.createRadialGradient(sx, syw, 0, sx, syw, fr * 2); fg2.addColorStop(0, 'rgba(255,255,255,' + (0.55 * pour) + ')'); fg2.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = fg2; ctx.beginPath(); ctx.ellipse(sx, syw, fr * 2, fr * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        // droplets and bubbles at the impact point
+        if (Math.random() < 0.9 * pour) drops.push({ x: sx + (Math.random() - 0.5) * 20, y: syw - 4, vx: (Math.random() - 0.5) * 6, vy: -3 - Math.random() * 5, r: 1.5 + Math.random() * 2 });
+        if (Math.random() < 0.6 * pour) bubbles.push({ x: sx + (Math.random() - 0.5) * 40, y: syw + 10 + Math.random() * 60, r: 2 + Math.random() * 4, vy: -1.5 - Math.random() * 2, wob: Math.random() * 6.28 });
+        // rate label beside the stream
+        ctx.font = '600 11px system-ui, sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.textAlign = sx > W / 2 ? 'right' : 'left';
+        ctx.fillText((level < target - 0.01 ? 'filling to ' + Math.round(target * 100) + '% of the year\'s total' : '553 gallons per second'), sx + (sx > W / 2 ? -sw : sw), Math.min(sy0 + 90, syw - 20));
+      }
+    }
+    // droplets: free fall, then rejoin the water
+    ctx.fillStyle = 'rgba(235,245,255,0.85)';
+    for (var dd = drops.length - 1; dd >= 0; dd--) { var dr = drops[dd]; dr.vy += 0.35 * dt; dr.x += dr.vx * dt; dr.y += dr.vy * dt; if (dr.y > surfaceY(dr.x) || dr.y > H) { drops.splice(dd, 1); continue; } ctx.beginPath(); ctx.arc(dr.x, dr.y, dr.r, 0, Math.PI * 2); ctx.fill(); }
+    // bubbles
+    if (level > 0.05 && Math.random() < 0.35) bubbles.push({ x: Math.random() * W, y: H + 5, r: 2 + Math.random() * 5, vy: -0.8 - Math.random() * 1.6, wob: Math.random() * 6.28 });
+    ctx.lineWidth = 1.2;
+    for (var b = bubbles.length - 1; b >= 0; b--) {
+      var bb = bubbles[b]; bb.y += bb.vy * dt; bb.x += Math.sin(t * 3 + bb.wob) * 0.4 * dt; bb.vy -= 0.004 * dt;
+      if (bb.y < surfaceY(bb.x) + 2) { bubbles.splice(b, 1); continue; }
+      ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.beginPath(); ctx.arc(bb.x, bb.y, bb.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.beginPath(); ctx.arc(bb.x - bb.r * 0.35, bb.y - bb.r * 0.35, bb.r * 0.25, 0, Math.PI * 2); ctx.fill();
+    }
+    // splashes (expanding rings)
+    for (var sp = splashes.length - 1; sp >= 0; sp--) { var s = splashes[sp], age = t - s.born; if (age > 0.7) { splashes.splice(sp, 1); continue; } ctx.strokeStyle = 'rgba(255,255,255,' + (0.6 * (1 - age / 0.7)) + ')'; ctx.beginPath(); ctx.ellipse(s.x, s.y, 10 + age * 60, 4 + age * 14, 0, 0, Math.PI * 2); ctx.stroke(); }
+    // fish
+    if (level > 0.12) fish.forEach(function (f) { stepFish(f, dt); drawFish(f); });
+    // ripple distortion strength follows the water level
+    if (dispMap) dispMap.setAttribute('scale', String((9 * Math.min(level / 0.4, 1)).toFixed(2)));
+    if (noise && (Math.floor(now / 50) % 2 === 0)) noise.setAttribute('baseFrequency', (0.006 + 0.0015 * Math.sin(t * 0.9)).toFixed(4) + ' ' + (0.018 + 0.003 * Math.cos(t * 1.3)).toFixed(4));
+    raf = requestAnimationFrame(frame);
+  }
+
+  function updateGauge() {
+    if (!on) return;
+    var now = new Date(), yr = now.getFullYear(), frac = yearFrac();
+    var liters = LITERS_YEAR * frac, gal = liters * GAL_PER_L;
+    document.getElementById('fgYear').textContent = yr;
+    document.getElementById('fgGal').textContent = fmt(gal / 1e9, 3);
+    document.getElementById('fgPct').textContent = fmt(frac * 100, 1) + '%';
+    document.getElementById('fgPark').textContent = fmt((liters / 1000) / PARK_M2 * 3.28084, 1) + ' ft';
+    document.getElementById('fgPools').textContent = fmt(gal / 660000);
+    document.getElementById('fgPerSec').textContent = fmt(LITERS_YEAR * GAL_PER_L / SEC_YEAR);
+  }
+
+  var gaugeTimer = null;
+  function setFlood(state) {
+    on = state;
+    btn.setAttribute('aria-pressed', String(on));
+    btn.querySelector('.fb-text').textContent = on ? 'Drain' : 'Flood mode';
+    if (on) {
+      size(); reset(); target = Math.max(yearFrac(), 0.2); // water height = share of the year's total consumed so far
+      document.body.classList.add('flooded'); canvas.style.display = 'block';
+      gauge.hidden = false; requestAnimationFrame(function () { gauge.classList.add('show'); });
+      updateGauge(); gaugeTimer = setInterval(updateGauge, 1000);
+      if (!raf) raf = requestAnimationFrame(frame);
+    } else {
+      target = 0; gauge.classList.remove('show'); setTimeout(function () { if (!on) gauge.hidden = true; }, 400);
+      clearInterval(gaugeTimer);
+      if (!raf) raf = requestAnimationFrame(frame);
+    }
+  }
+  btn.addEventListener('click', function () { setFlood(!on); });
+  if (btn2) btn2.addEventListener('click', function () { setFlood(true); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  window.addEventListener('resize', function () { if (on) size(); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden && raf) { cancelAnimationFrame(raf); raf = null; } else if (!document.hidden && (on || level > 0) && !raf) raf = requestAnimationFrame(frame); });
 })();

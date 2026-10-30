@@ -28,6 +28,7 @@
       <li><a href="bibliography.html">Bibliography</a></li>
     </ul>
     <div style="display:flex;gap:.5rem">
+      <button class="flood-btn" id="floodBtn" type="button" aria-pressed="false" title="Flood mode: see data center water use as rising water"><span class="fb-icon" aria-hidden="true">🌊</span><span class="fb-text">Flood mode</span></button>
       <button class="icon-btn" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode">☾</button>
       <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-controls="navLinks">☰</button>
     </div>
@@ -43,8 +44,9 @@
     </div>
     <div class="wrap">
       <div class="eyebrow">H.R. 4400 · Energy and Environment Committee</div>
-      <h1>AI needs power. <em>Your family</em> shouldn't be the one paying for it.</h1>
-      <p class="lede">The <strong>WATTS UP Act</strong> makes large data centers report what they use, pay for the grid upgrades they cause, and run cleaner over time — without slowing down American innovation.</p>
+      <h1 class="wordmark"><span class="wm-bolt" aria-hidden="true">⚡</span>WATTS UP<span class="wm-act">Act</span></h1>
+      <p class="acronym-line"><b>W</b>ater, <b>A</b>ccountability, <b>T</b>ransparency, and <b>T</b>racking <b>S</b>tandards for <b>U</b>tility <b>P</b>rotection Act</p>
+      <p class="lede"><strong>AI needs power. Your family shouldn't be the one paying for it.</strong> The WATTS UP Act makes large data centers report what they use, pay for the grid upgrades they cause, and run cleaner over time — without slowing down American innovation.</p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="bill.html">Read the bill →</a>
         <a class="btn btn-ghost" href="letter.html">Letter to Rep. Peters</a>
@@ -158,17 +160,29 @@
       </div>
       <div class="card calc reveal">
         <label for="mwSlider">Data center peak demand <output id="mwOut">100 MW</output></label>
-        <input type="range" id="mwSlider" min="10" max="1000" step="10" value="100" aria-describedby="calcNote">
-        <div class="ticks"><span>10 MW</span><span>50 MW threshold</span><span>1,000 MW</span></div>
+        <div class="slider-wrap">
+          <input type="range" id="mwSlider" min="10" max="1000" step="10" value="100" aria-describedby="calcNote">
+          <div class="threshold" style="left:4.04%"><span>50 MW threshold</span></div>
+        </div>
+        <div class="ticks"><span>10 MW</span><span>1,000 MW</span></div>
+        <div class="presets" role="group" aria-label="Example sizes">
+          <button type="button" data-mw="20">Small (20 MW)</button>
+          <button type="button" data-mw="100">Typical hyperscale (100 MW)</button>
+          <button type="button" data-mw="300">Large campus (300 MW)</button>
+          <button type="button" data-mw="1000">AI mega-site (1,000 MW)</button>
+        </div>
+        <div class="formula" id="formula">100 MW × 8,760 h × 80% = <b>700,800 MWh/yr</b> × $1.00 = <b>$700,800</b></div>
         <div class="results">
-          <div class="result" id="rCoveredBox"><div class="v" id="rCovered">Yes</div><div class="k">Covered by the Act?</div></div>
+          <div class="result" id="rCoveredBox"><div class="v" id="rCovered">Yes</div><div class="k">Covered by the Act? (50 MW and up)</div></div>
           <div class="result"><div class="v" id="rHomes">80,000</div><div class="k">homes' worth of power</div></div>
           <div class="result"><div class="v" id="rMwh">700,800</div><div class="k">MWh used per year</div></div>
-          <div class="result"><div class="v" id="rFee">$0.7 M</div><div class="k">annual Grid Accountability Fee</div></div>
-          <div class="result"><div class="v" id="rShare">0.40%</div><div class="k">of the national fund</div></div>
-          <div class="result"><div class="v" id="rBillShare">$0</div><div class="k">added to your electric bill</div></div>
+          <div class="result"><div class="v" id="rFee">$700,800</div><div class="k">Grid Accountability Fee per year</div></div>
+          <div class="result"><div class="v" id="rWater">69.5 M</div><div class="k">gallons of cooling water per year (U.S. average)</div></div>
+          <div class="result"><div class="v" id="rShare">0.40%</div><div class="k">of the $176 M national fund</div></div>
+          <div class="result"><div class="v" id="rFine">$50,000</div><div class="k">max fine per day for breaking Sec. 3 or 4</div></div>
+          <div class="result"><div class="v" id="rBillShare">$0.00</div><div class="k">added to a household's bill (Sec. 3 bans it)</div></div>
         </div>
-        <p class="note" id="calcNote">Assumes the facility runs at 80% of peak demand year-round and 1 MW serves about 800 homes. Illustrative, not a utility rate study.</p>
+        <p class="note" id="calcNote">Formula: MW × 8,760 hours × 80% utilization = MWh per year; fee = $1.00 per MWh. Homes: 1 MW ≈ 800 homes (an average U.S. home draws about 1.25 kW). Water: 0.375 liters per kWh, the 2023 U.S. data center average (66 billion liters ÷ 176 billion kWh, LBNL). Illustrative, not a utility rate study.</p>
       </div>
     </div>
   </section>
@@ -196,9 +210,7 @@
   <section id="acronym">
     <div class="narrow reveal" style="text-align:center">
       <div class="eyebrow">Yes, the name is on purpose</div>
-      <h2>WATTS UP</h2>
-      <p class="lede" style="margin-inline:auto"><strong>W</strong>ater, <strong>A</strong>ccountability, <strong>T</strong>ransparency, and <strong>T</strong>racking <strong>S</strong>tandards for <strong>U</strong>tility <strong>P</strong>rotection Act.</p>
-      <p class="muted">Congress has passed the USA PATRIOT Act, the CHIPS Act, and the FAIR Act. We're just continuing the tradition.</p>
+      <p class="lede" style="margin-inline:auto">Congress has passed the USA PATRIOT Act, the CHIPS Act, and the FAIR Act. The <strong>WATTS UP Act</strong> is just continuing the tradition — and the first word is <strong>Water</strong> for a reason. Try the <button type="button" class="link-btn" id="floodBtn2">flood mode</button> button at the top of the page.</p>
     </div>
   </section>
 
@@ -218,6 +230,26 @@
     <div><a href="bill.html">Bill</a> · <a href="letter.html">Letter</a> · <a href="bibliography.html">Bibliography</a></div>
   </div>
 </footer>
+
+<!-- Flood mode: water overlay, gauge, and the SVG ripple filter that distorts the page -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="waterRipple" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence id="rippleNoise" type="fractalNoise" baseFrequency="0.006 0.018" numOctaves="2" seed="3" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<canvas id="floodCanvas" aria-hidden="true"></canvas>
+<div id="floodGauge" role="status" aria-live="polite" hidden>
+  <div class="fg-head"><span class="live-dot"></span>FLOOD MODE · <span id="fgYear">2026</span> so far</div>
+  <div class="fg-big"><span id="fgGal">0</span><small>billion gallons</small></div>
+  <div class="fg-row">Water consumed by U.S. data centers this year (at the 2023 pace). The water on your screen is <b id="fgPct">0%</b> of the full-year total.</div>
+  <div class="fg-grid">
+    <div><b id="fgPark">0 ft</b><span>deep over all of Central Park</span></div>
+    <div><b id="fgPools">0</b><span>Olympic pools</span></div>
+    <div><b id="fgPerSec">0</b><span>gallons per second, right now</span></div>
+  </div>
+  <div class="fg-foot">66 billion liters per year (LBNL 2023) ÷ Central Park's 843 acres. Fish are decorative; the numbers are not.</div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
