@@ -232,3 +232,183 @@
   /* ---------- Footer year ---------- */
   var yr = document.getElementById('year'); if (yr) yr.textContent = String(new Date().getFullYear());
 })();
+
+/* ===== Motion layer (home page): intro, circuit canvas, parallax, live ticker ===== */
+(function () {
+  'use strict';
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var body = document.body;
+  var isHome = body.classList.contains('home');
+
+  /* ---------- Intro: lightning strike that powers the page on ---------- */
+  var intro = document.getElementById('intro');
+  var seen = false;
+  try { seen = sessionStorage.getItem('introSeen') === '1'; } catch (e) {}
+  function finishIntro() {
+    body.classList.remove('intro-running');
+    body.classList.add('hero-in');
+    if (intro) { intro.classList.add('is-off'); setTimeout(function () { intro.classList.remove('is-on'); intro.classList.remove('is-off'); }, 800); }
+  }
+  if (intro && isHome && !reduce && !seen) {
+    try { sessionStorage.setItem('introSeen', '1'); } catch (e) {}
+    body.classList.add('intro-running');
+    intro.classList.add('is-on');
+    var c = document.getElementById('introCanvas'), ctx = c.getContext('2d');
+    var W, H, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    function size() { W = c.clientWidth; H = c.clientHeight; c.width = W * dpr; c.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+    size();
+    // Build a jagged bolt from (x0,y0) to (x1,y1) with branches.
+    function bolt(x0, y0, x1, y1, depth, out) {
+      var pts = [[x0, y0]], segs = 14, dx = (x1 - x0) / segs, dy = (y1 - y0) / segs, len = Math.hypot(x1 - x0, y1 - y0);
+      for (var i = 1; i < segs; i++) {
+        var px = x0 + dx * i, py = y0 + dy * i;
+        var jitter = (Math.random() - 0.5) * len * 0.12;
+        pts.push([px + jitter * (dy / len) * -1, py + jitter * (dx / len)]);
+        if (depth > 0 && Math.random() < 0.28) {
+          var last = pts[pts.length - 1];
+          var ang = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.4, bl = len * (0.25 + Math.random() * 0.25);
+          bolt(last[0], last[1], last[0] + Math.cos(ang) * bl, last[1] + Math.sin(ang) * bl, depth - 1, out);
+        }
+      }
+      pts.push([x1, y1]); out.push({ pts: pts, w: depth === 2 ? 3.6 : depth === 1 ? 1.9 : 1.1 });
+    }
+    var strikes = [], t0 = performance.now(), flashes = [{ at: 520 }, { at: 760 }, { at: 980 }];
+    function newStrike() { var out = []; var sx = W * (0.35 + Math.random() * 0.3); bolt(sx, -10, W * (0.4 + Math.random() * 0.2), H * (0.62 + Math.random() * 0.1), 2, out); return { bolts: out, born: performance.now(), life: 340 + Math.random() * 220 }; }
+    var nextStrike = 420;
+    function frame(now) {
+      var t = now - t0;
+      ctx.clearRect(0, 0, W, H);
+      // faint energized grid that brightens over time
+      var g = Math.min(t / 1400, 1);
+      ctx.strokeStyle = 'rgba(158,197,244,' + (0.04 + 0.1 * g) + ')'; ctx.lineWidth = 1;
+      for (var x = (W / 2) % 48; x < W; x += 48) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+      for (var y = 0; y < H; y += 48) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+      if (t > nextStrike && strikes.length < 3) { strikes.push(newStrike()); nextStrike = t + 180 + Math.random() * 220; }
+      strikes.forEach(function (s) {
+        var age = now - s.born, a = Math.max(0, 1 - age / s.life);
+        if (a <= 0) return;
+        s.bolts.forEach(function (b) {
+          ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+          ctx.shadowColor = 'rgba(158,197,244,' + a + ')'; ctx.shadowBlur = 32;
+          ctx.strokeStyle = 'rgba(255,255,255,' + (0.95 * a) + ')'; ctx.lineWidth = b.w;
+          ctx.beginPath(); b.pts.forEach(function (p, i) { if (i) ctx.lineTo(p[0], p[1]); else ctx.moveTo(p[0], p[1]); }); ctx.stroke();
+          ctx.shadowBlur = 0;
+        });
+      });
+      flashes.forEach(function (f) { var d = t - f.at; if (d > 0 && d < 140) { ctx.fillStyle = 'rgba(205,226,251,' + (0.35 * (1 - d / 140)) + ')'; ctx.fillRect(0, 0, W, H); } });
+      // power-on glow rising from the bottom
+      if (t > 1000) { var p = Math.min((t - 1000) / 600, 1); var grad = ctx.createLinearGradient(0, H, 0, H * (1 - 0.7 * p)); grad.addColorStop(0, 'rgba(42,120,214,' + (0.55 * p) + ')'); grad.addColorStop(1, 'rgba(42,120,214,0)'); ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H); }
+      if (t < 1700) requestAnimationFrame(frame); else finishIntro();
+    }
+    requestAnimationFrame(frame);
+    window.addEventListener('resize', size);
+    setTimeout(finishIntro, 2600); // safety net
+  } else {
+    body.classList.add('hero-in');
+  }
+
+  /* ---------- Scroll parallax for [data-speed] elements ---------- */
+  var par = Array.prototype.slice.call(document.querySelectorAll('[data-speed]'));
+  var lastY = window.scrollY || 0, velocity = 0, ticking = false;
+  function applyParallax() {
+    var y = window.scrollY || 0;
+    par.forEach(function (el) {
+      var s = parseFloat(el.getAttribute('data-speed')) || 0;
+      el.style.transform = 'translate3d(0,' + (y * s).toFixed(1) + 'px,0)' + (el.classList.contains('bolt-b') ? ' rotate(14deg)' : el.classList.contains('bolt-c') ? ' rotate(-10deg)' : '');
+    });
+    ticking = false;
+  }
+  if (!reduce && par.length) {
+    window.addEventListener('scroll', function () {
+      var y = window.scrollY || 0; velocity = velocity * 0.6 + (y - lastY) * 0.4; lastY = y;
+      if (!ticking) { ticking = true; requestAnimationFrame(applyParallax); }
+    }, { passive: true });
+    applyParallax();
+  }
+
+  /* ---------- Circuit-trace canvas with flowing electrons ---------- */
+  var cc = document.getElementById('circuitCanvas');
+  if (cc && !reduce) {
+    var cx = cc.getContext('2d'), CW, CH, traces = [], dots = [], dpr2 = Math.min(window.devicePixelRatio || 1, 1.5);
+    function csize() {
+      CW = window.innerWidth; CH = window.innerHeight; cc.width = CW * dpr2; cc.height = CH * dpr2; cx.setTransform(dpr2, 0, 0, dpr2, 0, 0);
+      traces = []; dots = [];
+      var n = CW < 700 ? 5 : 9;
+      for (var i = 0; i < n; i++) {
+        // orthogonal path: start left/right edge, several right-angle turns
+        var pts = [], x = Math.random() < 0.5 ? -20 : CW + 20, y = Math.random() * CH, dir = x < 0 ? 1 : -1;
+        pts.push([x, y]);
+        for (var k = 0; k < 5; k++) {
+          x += dir * (80 + Math.random() * 220); pts.push([x, y]);
+          y += (Math.random() - 0.5) * 260; pts.push([x, y]);
+        }
+        x += dir * 400; pts.push([x, y]);
+        var len = 0, cum = [0];
+        for (var j = 1; j < pts.length; j++) { len += Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]); cum.push(len); }
+        traces.push({ pts: pts, cum: cum, len: len });
+        for (var d = 0; d < 3; d++) dots.push({ t: i, p: Math.random(), v: 0.0006 + Math.random() * 0.0008 });
+      }
+    }
+    function posOn(tr, f) {
+      var dist = f * tr.len;
+      for (var j = 1; j < tr.cum.length; j++) {
+        if (dist <= tr.cum[j]) { var a = tr.pts[j - 1], b = tr.pts[j], u = (dist - tr.cum[j - 1]) / (tr.cum[j] - tr.cum[j - 1] || 1); return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]; }
+      }
+      return tr.pts[tr.pts.length - 1];
+    }
+    var running = true;
+    function cframe() {
+      if (!running) return;
+      var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+      var scrollY = window.scrollY || 0;
+      cx.clearRect(0, 0, CW, CH);
+      cx.lineWidth = 1; cx.strokeStyle = dark ? 'rgba(158,197,244,0.10)' : 'rgba(42,120,214,0.12)';
+      var shift = (scrollY * 0.15) % CH;
+      traces.forEach(function (tr) {
+        cx.beginPath();
+        tr.pts.forEach(function (p, i) { var yy = ((p[1] - shift) % CH + CH) % CH; if (i && Math.abs(yy - (((tr.pts[i - 1][1] - shift) % CH + CH) % CH)) > CH / 2) cx.moveTo(p[0], yy); else if (i) cx.lineTo(p[0], yy); else cx.moveTo(p[0], yy); });
+        cx.stroke();
+      });
+      var boost = 1 + Math.min(Math.abs(velocity) / 12, 6);
+      velocity *= 0.92;
+      dots.forEach(function (d) {
+        d.p += d.v * boost; if (d.p > 1) d.p = 0;
+        var tr = traces[d.t], q = posOn(tr, d.p), yy = ((q[1] - shift) % CH + CH) % CH;
+        cx.beginPath(); cx.fillStyle = dark ? 'rgba(158,197,244,0.9)' : 'rgba(42,120,214,0.75)';
+        cx.shadowColor = dark ? '#9ec5f4' : '#2a78d6'; cx.shadowBlur = 10;
+        cx.arc(q[0], yy, 2.2, 0, Math.PI * 2); cx.fill(); cx.shadowBlur = 0;
+      });
+      requestAnimationFrame(cframe);
+    }
+    csize(); cframe();
+    var rt; window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(csize, 150); });
+    document.addEventListener('visibilitychange', function () { running = !document.hidden; if (running) cframe(); });
+  }
+
+  /* ---------- Live ticker ---------- */
+  var kwhEl = document.getElementById('liveKwh');
+  if (kwhEl) {
+    var SEC_YEAR = 365.25 * 86400;
+    var KWH_PER_SEC = 176e9 / SEC_YEAR;        // 176 TWh/yr -> kWh per second (~5,570)
+    var GAL_PER_SEC = (66e9 * 0.264172) / SEC_YEAR; // 66 B liters/yr -> gallons per second (~553)
+    var start = Date.now();
+    var fmt = function (n, d) { return n.toLocaleString(undefined, { maximumFractionDigits: d || 0, minimumFractionDigits: d || 0 }); };
+    var yearEl = document.getElementById('liveYear'), yearEl2 = document.getElementById('liveYear2');
+    function tick() {
+      var now = Date.now(), s = (now - start) / 1000;
+      var kwh = s * KWH_PER_SEC, gal = s * GAL_PER_SEC;
+      kwhEl.textContent = fmt(kwh);
+      document.getElementById('liveHomes').textContent = fmt(kwh / 29); // ~29 kWh per U.S. home per day
+      document.getElementById('liveGal').textContent = fmt(gal);
+      document.getElementById('livePools').textContent = fmt(gal / 40); // ~40 gallons per bath
+      var yr = new Date(now).getFullYear(), jan1 = new Date(yr, 0, 1).getTime(), ys = (now - jan1) / 1000;
+      var ytdMwh = ys * KWH_PER_SEC / 1000, ytdGal = ys * GAL_PER_SEC;
+      document.getElementById('liveYtd').textContent = fmt(ytdMwh);
+      document.getElementById('liveYtdTwh').textContent = fmt(ytdMwh / 1e6, 2);
+      document.getElementById('liveYtdGal').textContent = fmt(ytdGal / 1000);
+      document.getElementById('liveYtdOlympic').textContent = fmt(ytdGal / 660000); // 660,000 gal per Olympic pool
+      if (yearEl) yearEl.textContent = yr; if (yearEl2) yearEl2.textContent = yr;
+    }
+    tick(); setInterval(tick, 100);
+  }
+})();

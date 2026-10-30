@@ -9,7 +9,14 @@
 <link rel="stylesheet" href="styles.css">
 <script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.setAttribute('data-theme',t);else if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.setAttribute('data-theme','dark');}catch(e){}</script>
 </head>
-<body>
+<body class="home">
+<div id="intro" aria-hidden="true"><canvas id="introCanvas"></canvas><div class="intro-label"><span class="intro-dot"></span>POWERING ON</div></div>
+<div class="bg-layer" aria-hidden="true">
+  <canvas id="circuitCanvas"></canvas>
+  <div class="orb orb-1" data-speed="-0.18"></div>
+  <div class="orb orb-2" data-speed="0.12"></div>
+  <div class="orb orb-3" data-speed="-0.08"></div>
+</div>
 <div id="progress" aria-hidden="true"></div>
 <header class="site-header">
   <nav class="wrap nav" aria-label="Main">
@@ -29,6 +36,11 @@
 
 <main>
   <section class="hero">
+    <div class="hero-bolts" aria-hidden="true">
+      <svg class="bolt bolt-a" data-speed="0.25" viewBox="0 0 64 120"><path d="M38 2 12 66h20l-6 52 30-70H36z"/></svg>
+      <svg class="bolt bolt-b" data-speed="-0.2" viewBox="0 0 64 120"><path d="M38 2 12 66h20l-6 52 30-70H36z"/></svg>
+      <svg class="bolt bolt-c" data-speed="0.4" viewBox="0 0 64 120"><path d="M38 2 12 66h20l-6 52 30-70H36z"/></svg>
+    </div>
     <div class="wrap">
       <div class="eyebrow">H.R. 4400 · Energy and Environment Committee</div>
       <h1>AI needs power. <em>Your family</em> shouldn't be the one paying for it.</h1>
@@ -54,6 +66,40 @@
       <div class="stat reveal"><div class="value"><span data-count="417">0</span><small>–3</small></div><div class="label">House vote on the Ratepayer Protection Act, Sept. 16, 2026</div><div class="src">H.R. 9340</div></div>
     </div>
   </div>
+
+  <section id="live" class="live-section">
+    <div class="wrap">
+      <div class="live-card reveal">
+        <div class="live-head">
+          <div class="live-badge"><span class="live-dot"></span>LIVE ESTIMATE</div>
+          <div class="live-sub">U.S. data centers, running at the Department of Energy's measured 2023 pace</div>
+        </div>
+        <div class="live-grid">
+          <div class="live-item">
+            <div class="live-k">Electricity used since you opened this page</div>
+            <div class="live-v"><span id="liveKwh">0</span><small>kWh</small></div>
+            <div class="live-note">≈ <span id="liveHomes">0</span> homes' electricity for a full day</div>
+          </div>
+          <div class="live-item">
+            <div class="live-k">Water consumed since you opened this page</div>
+            <div class="live-v"><span id="liveGal">0</span><small>gallons</small></div>
+            <div class="live-note">≈ <span id="livePools">0</span> bathtubs</div>
+          </div>
+          <div class="live-item">
+            <div class="live-k">Electricity so far in <span id="liveYear">2026</span></div>
+            <div class="live-v"><span id="liveYtd">0</span><small>MWh</small></div>
+            <div class="live-note">That is <span id="liveYtdTwh">0</span> terawatt-hours</div>
+          </div>
+          <div class="live-item">
+            <div class="live-k">Water so far in <span id="liveYear2">2026</span></div>
+            <div class="live-v"><span id="liveYtdGal">0</span><small>thousand gal</small></div>
+            <div class="live-note">≈ <span id="liveYtdOlympic">0</span> Olympic pools</div>
+          </div>
+        </div>
+        <p class="live-foot">Rates: 176 TWh/yr of electricity and 66 billion liters/yr of water (LBNL, 2023). Usage has grown since 2023, so these numbers are conservative. Running tally updates 10 times per second.</p>
+      </div>
+    </div>
+  </section>
 
   <section id="problem">
     <div class="wrap split">
@@ -93,9 +139,9 @@
         <p class="lede">Fifty megawatts is roughly the power of 40,000 homes. The bill only touches the giants — not small businesses or school server rooms.</p>
       </div>
       <div class="pillars">
-        <div class="pillar reveal"><div class="num">1</div><h3>Show your numbers</h3><p>Every large data center reports its electricity, peak demand, cooling water, efficiency (PUE), and clean-energy share to the Department of Energy each year — published in a free, searchable public database.</p><a href="bill.html#sec2">Section 2 →</a></div>
-        <div class="pillar reveal"><div class="num">2</div><h3>Pay your own way</h3><p>Data centers cover the full cost of the power plants, substations, and lines built to serve them, sign 12-year contracts with exit fees, and utilities can't raise household rates to cover them.</p><a href="bill.html#sec3">Section 3 →</a></div>
-        <div class="pillar reveal"><div class="num">3</div><h3>Clean up over time</h3><p>New facilities hit a PUE of 1.3; everyone reaches 50% clean energy by 2030 and 100% by 2035, half of it from <em>new</em> sources, and agrees to cut load 10% during grid emergencies.</p><a href="bill.html#sec4">Section 4 →</a></div>
+        <div class="pillar reveal"><div class="num" data-speed="0.15">1</div><h3>Show your numbers</h3><p>Every large data center reports its electricity, peak demand, cooling water, efficiency (PUE), and clean-energy share to the Department of Energy each year — published in a free, searchable public database.</p><a href="bill.html#sec2">Section 2 →</a></div>
+        <div class="pillar reveal"><div class="num" data-speed="0.25">2</div><h3>Pay your own way</h3><p>Data centers cover the full cost of the power plants, substations, and lines built to serve them, sign 12-year contracts with exit fees, and utilities can't raise household rates to cover them.</p><a href="bill.html#sec3">Section 3 →</a></div>
+        <div class="pillar reveal"><div class="num" data-speed="0.35">3</div><h3>Clean up over time</h3><p>New facilities hit a PUE of 1.3; everyone reaches 50% clean energy by 2030 and 100% by 2035, half of it from <em>new</em> sources, and agrees to cut load 10% during grid emergencies.</p><a href="bill.html#sec4">Section 4 →</a></div>
       </div>
     </div>
   </section>
