@@ -322,7 +322,7 @@ body.home #pillars, body.home #timeline { background: color-mix(in srgb, var(--s
 .live-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; }
 .live-item { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); border-radius: 12px; padding: 1rem 1.1rem; min-width: 0; }
 .live-k { font-size: .8rem; color: #b7d3f6; margin-bottom: .4rem; }
-.live-v { font-family: var(--serif); font-size: clamp(1.6rem, 2.6vw, 2.2rem); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.live-v { font-family: var(--serif); font-size: clamp(1.5rem, 2vw, 2rem); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .live-v small { font-family: var(--sans); font-size: .8rem; font-weight: 600; color: #9ec5f4; margin-left: .4rem; }
 .live-note { font-size: .78rem; color: #9ec5f4; margin-top: .35rem; }
 .live-foot { color: #8fb1dc; font-size: .78rem; margin: 1rem 0 0; }

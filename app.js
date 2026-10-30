@@ -403,9 +403,9 @@
       document.getElementById('livePools').textContent = fmt(gal / 40); // ~40 gallons per bath
       var yr = new Date(now).getFullYear(), jan1 = new Date(yr, 0, 1).getTime(), ys = (now - jan1) / 1000;
       var ytdMwh = ys * KWH_PER_SEC / 1000, ytdGal = ys * GAL_PER_SEC;
-      document.getElementById('liveYtd').textContent = fmt(ytdMwh);
+      document.getElementById('liveYtd').textContent = fmt(ytdMwh / 1000);
       document.getElementById('liveYtdTwh').textContent = fmt(ytdMwh / 1e6, 2);
-      document.getElementById('liveYtdGal').textContent = fmt(ytdGal / 1000);
+      document.getElementById('liveYtdGal').textContent = fmt(ytdGal / 1e6, 1);
       document.getElementById('liveYtdOlympic').textContent = fmt(ytdGal / 660000); // 660,000 gal per Olympic pool
       if (yearEl) yearEl.textContent = yr; if (yearEl2) yearEl2.textContent = yr;
     }
