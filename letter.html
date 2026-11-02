@@ -46,9 +46,16 @@
 
   <div class="proof">
     <h2 style="font-size:1.5rem">Proof of submission</h2>
-    <p class="muted">This letter was submitted through Congressman Peters's official contact form at <a href="https://scottpeters.house.gov/contact" rel="noopener" target="_blank">scottpeters.house.gov/contact</a>. The confirmation screenshot appears below.</p>
-    <div class="frame" id="proofFrame" style="border:0;padding:0;background:transparent">
-      <img src="proof.png" alt="Screenshot of the letter submitted through Rep. Peters's contact form, followed by the office's confirmation page">
+    <p class="muted">This letter was submitted through Congressman Peters's official contact form at <a href="https://scottpeters.house.gov/contact" rel="noopener" target="_blank">scottpeters.house.gov/contact</a>. Screenshots of the submitted form and the confirmation page appear below.</p>
+    <div id="proofFrame" style="position:relative;left:50%;transform:translateX(-50%);width:min(1100px, calc(100vw - 32px));display:grid;gap:1.5rem;margin-top:1rem">
+      <figure style="margin:0">
+        <a href="proof-form.png" target="_blank" rel="noopener"><img src="proof-form.png" alt="The letter typed into Rep. Peters's contact form, with the issue set to Energy and the subject line filled in" style="width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--line);background:#fff"></a>
+        <figcaption class="muted" style="margin-top:.5rem;font-size:.9rem">Step 1: The letter entered in Congressman Peters's official contact form (issue: Energy; subject: "Support the WATTS UP Act: Make Data Centers Pay Their Fair Share"). Phone and email are blurred for privacy. Click to open full size.</figcaption>
+      </figure>
+      <figure style="margin:0">
+        <a href="proof-confirmation.png" target="_blank" rel="noopener"><img src="proof-confirmation.png" alt="Confirmation page: Thank you for contacting the Office of Congressman Scott Peters. This confirms receipt of your message." style="width:100%;height:auto;display:block;border-radius:10px;border:1px solid var(--line);background:#fff"></a>
+        <figcaption class="muted" style="margin-top:.5rem;font-size:.9rem">Step 2: The confirmation page after submitting: "Thank you for contacting the Office of Congressman Scott Peters. This confirms receipt of your message."</figcaption>
+      </figure>
     </div>
   </div>
 </main>
@@ -60,9 +67,5 @@
   </div>
 </footer>
 <script src="app.js"></script>
-<script>
-// If proof.png exists next to this page, show it automatically.
-(function(){var img=new Image();img.onload=function(){var f=document.getElementById('proofFrame');if(!f)return;f.innerHTML='';f.style.border='0';f.style.padding='0';f.style.background='transparent';img.alt='Screenshot of the confirmation page after submitting the letter to Rep. Peters\'s office';f.appendChild(img);};img.src='proof.png';})();
-</script>
 </body>
 </html>
